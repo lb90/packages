@@ -1,0 +1,41 @@
+# Maintainer: Alexey Pavlov <alexpux@gmail.com>
+
+_realname=glibmm
+pkgbase=mingw-w64-${_realname}-next
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}-next"
+pkgver=2.61.1
+pkgrel=1
+pkgdesc="Glib-- (glibmm) is a C++ interface for glib - next 2.62 (mingw-w64)"
+arch=('any')
+url="https://www.gtkmm.org/"
+license=("LGPL")
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-pkg-config")
+depends=("${MINGW_PACKAGE_PREFIX}-libsigc++3" "${MINGW_PACKAGE_PREFIX}-glib2")
+options=('staticlibs' '!strip')
+source=("https://download.gnome.org/sources/glibmm/${pkgver%.*}/glibmm-${pkgver}.tar.xz")
+sha256sums=('82f92853060ad84025b99b1116d9487fba6c6353256dfe16b14bedbd6b1ead0b')
+
+prepare() {
+  cd "${srcdir}"/${_realname}-${pkgver}
+}
+
+build() {
+  [[ -d ${srcdir}/build-${MINGW_CHOST} ]] && rm -rf ${srcdir}/build-${MINGW_CHOST}
+  mkdir -p "${srcdir}/build-${MINGW_CHOST}" && cd "${srcdir}/build-${MINGW_CHOST}"
+  ../${_realname}-${pkgver}/configure \
+    --prefix=${MINGW_PREFIX} \
+    --build=${MINGW_CHOST} \
+    --host=${MINGW_CHOST} \
+    --enable-static \
+    --enable-shared \
+    --disable-documentation
+
+  make
+}
+
+package() {
+  cd "${srcdir}/build-${MINGW_CHOST}"
+  make DESTDIR="${pkgdir}" install
+
+  install -Dm644 "${srcdir}/${_realname}-${pkgver}/COPYING" "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}-next/COPYING"
+}

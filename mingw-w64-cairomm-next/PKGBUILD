@@ -1,0 +1,39 @@
+# Maintainer: Alexey Pavlov <alexpux@gmail.com>
+
+_realname=cairomm
+pkgbase=mingw-w64-${_realname}-next
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}-next"
+pkgver=1.15.5
+pkgrel=1
+pkgdesc="C++ bindings to Cairo vector graphics library - next 1.16 (mingw-w64)"
+arch=('any')
+url="https://www.cairographics.org/"
+license=("LGPL, MPL")
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-pkg-config" "${MINGW_PACKAGE_PREFIX}-glib2")
+depends=("${MINGW_PACKAGE_PREFIX}-libsigc++3" "${MINGW_PACKAGE_PREFIX}-cairo")
+options=(!strip staticlibs)
+source=("https://www.cairographics.org/releases/cairomm-${pkgver}.tar.gz")
+sha256sums=('8db629f44378cac62b4931f725520334024e62c1951c4396682f1add63c1e3d1')
+
+build() {
+  CPPFLAGS+=" -D_REENTRANT -D_POSIX_SOURCE"
+  export lt_cv_deplibs_check_method='pass_all'
+  [[ -d "${srcdir}/build-${MINGW_CHOST}" ]] && rm -rf "${srcdir}/build-${MINGW_CHOST}"
+  mkdir -p "${srcdir}/build-${MINGW_CHOST}" && cd "${srcdir}/build-${MINGW_CHOST}"
+  ../${_realname}-${pkgver}/configure CXXFLAGS='-std=c++17' \
+    --prefix=${MINGW_PREFIX} \
+    --build=${MINGW_CHOST} \
+    --host=${MINGW_CHOST} \
+    --enable-shared \
+    --enable-static \
+    --disable-documentation
+
+  make
+}
+
+package() {
+  cd "${srcdir}/build-${MINGW_CHOST}"
+  make DESTDIR="${pkgdir}" install
+  find "${pkgdir}${MINGW_PREFIX}" -name '*.def' -o -name '*.exp' | xargs -rtl1 rm
+  install -Dm644 "${srcdir}/${_realname}-${pkgver}/COPYING" "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}-next/COPYING"
+}

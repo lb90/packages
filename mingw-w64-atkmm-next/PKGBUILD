@@ -1,0 +1,41 @@
+# Maintainer: Alexey Pavlov <alexpux@gmail.com>
+
+_realname=atkmm
+pkgbase=mingw-w64-${_realname}-next
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}-next"
+pkgver=2.29.1
+pkgrel=1
+pkgdesc="C++ bindings for atk - next 2.30 (mingw-w64)"
+arch=('any')
+url="https://gtkmm.sourceforge.io/"
+license=("LGPL")
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc" "${MINGW_PACKAGE_PREFIX}-pkg-config")
+depends=("${MINGW_PACKAGE_PREFIX}-atk"
+         "${MINGW_PACKAGE_PREFIX}-gcc-libs"
+         "${MINGW_PACKAGE_PREFIX}-glibmm-next"
+         "${MINGW_PACKAGE_PREFIX}-libsigc++3")
+options=(!strip staticlibs)
+source=("${_realname}-${pkgver}.tar.gz")
+sha256sums=('9e66ed324a5f73e1f0d7fcc63997e9792e970b346e5e90eb9f42ca0f82cd13ce')
+
+build() {
+  CPPFLAGS+=" -D_REENTRANT"
+  [[ -d "${srcdir}/build-${MINGW_CHOST}" ]] && rm -rf "${srcdir}/build-${MINGW_CHOST}"
+  mkdir -p "${srcdir}/build-${MINGW_CHOST}" && cd "${srcdir}/build-${MINGW_CHOST}"
+  ../${_realname}-${pkgver}/configure \
+    --prefix=${MINGW_PREFIX} \
+    --build=${MINGW_CHOST} \
+    --host=${MINGW_CHOST} \
+    --enable-shared \
+    --enable-static \
+    --disable-documentation
+
+  make
+}
+
+package() {
+  cd "${srcdir}/build-${MINGW_CHOST}"
+  make DESTDIR="${pkgdir}" install
+  find "${pkgdir}${MINGW_PREFIX}" -name '*.def' -o -name '*.exp' | xargs -rtl1 rm
+  install -Dm644 "${srcdir}/${_realname}-${pkgver}/COPYING" "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}-next/COPYING"
+}
